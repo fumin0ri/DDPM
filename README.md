@@ -31,6 +31,10 @@ uv run python train_butterflies.py --steps 20000      # 時間を半分にした
 
 # 学習済みモデルから生成 + 発表用の図
 uv run python sample.py --ckpt runs/butterflies/ckpt.pt
+
+# 学習曲線 (runs/butterflies/loss.csv → loss.png)
+uv run python plot_loss.py
+uv run python plot_loss.py train.log --logy --marks 5000  # nohup のログからも描ける
 ```
 
 SSH 先で長時間学習する場合は、接続が切れても止まらないように `tmux` や `nohup` で実行する:
@@ -48,6 +52,7 @@ nohup uv run python train_butterflies.py > train.log 2>&1 &
 | `toy_2d.py` | 2次元デモ → `outputs/toy_*/` |
 | `train_butterflies.py` | 画像の学習 → `runs/butterflies/` |
 | `sample.py` | 生成と可視化 |
+| `plot_loss.py` | 学習曲線 (loss.csv または学習ログから) |
 | `image_utils.py` | 画像の読み込み・保存 |
 
 データ: [huggan/smithsonian_butterflies_subset](https://huggingface.co/datasets/huggan/smithsonian_butterflies_subset) (初回実行時に自動ダウンロード)

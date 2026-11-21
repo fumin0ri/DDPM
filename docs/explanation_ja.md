@@ -26,6 +26,7 @@ DDPM がやっていることは、次の2行に集約できる。
 | [toy_2d.py](../toy_2d.py) | 2次元点群でのデモ (直感をつかむ用) | — |
 | [train_butterflies.py](../train_butterflies.py) | 蝶の画像 64×64 で学習 | — |
 | [sample.py](../sample.py) | 学習済みモデルから生成し、発表用の図を作る | — |
+| [plot_loss.py](../plot_loss.py) | 蝶の学習の学習曲線を描く | — |
 
 **大事な設計**: `ddpm.py` はネットワークの中身を知らない。「`model(x_t, t)` がノイズを返す」ことだけを約束にしているので、2次元の MLP でも画像の U-Net でも**同じ拡散コードがそのまま動く**。勉強会では「拡散の部分」と「ネットワークの部分」を分けて説明すると分かりやすい。
 
@@ -129,6 +130,7 @@ def loss(self, model, x0):                                    # 2: x0 はミニ�
 
 - loss は学習初期に急に下がり、そのあとはほぼ横ばいに見える。$t$ が大きいとき (ほぼノイズ) は当てやすく、$t$ が小さいときは当てにくい。ランダムな $t$ の平均を見ているため、下がり方が分かりにくい。
 - **loss が横ばいでも生成画像はまだ良くなっていく**ことが多い。途中の `samples_*.png` で確認するのが確実。
+- 発表では `plot_loss.py --marks 5000` で `samples_*.png` を保存した step に縦線を引き、loss のグラフと生成画像を並べて見せると、この点が伝わりやすい。
 
 ---
 
@@ -234,6 +236,7 @@ uv run python train_butterflies.py
 
 # (3) 発表用の図
 uv run python sample.py --ckpt runs/butterflies/ckpt.pt
+uv run python plot_loss.py --logy --marks 5000   # 学習曲線 → runs/butterflies/loss.png
 ```
 
 ### おすすめの話の順番

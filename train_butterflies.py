@@ -10,6 +10,7 @@ RTX 3090 なら1.5〜2時間程度の想定 (VRAM はどちらも十分足りる
   samples_XXXXXX.png : 学習途中の生成結果 (EMA モデル)
   data.png           : 学習データの例
   ckpt.pt            : チェックポイント (sample.py で読み込む)
+  loss.csv           : 100 step ごとの平均 loss (plot_loss.py で学習曲線にする)
 """
 
 import argparse
@@ -85,6 +86,10 @@ def main():
     # Ampere 以降 (RTX 3090 / 4090 など) は bfloat16 が速い。CPU のときは使わない。
     use_amp = device == "cuda"
 
+    # 学習曲線用に 100 step ごとの平均 loss を CSV に残す (1行ずつ flush するので途中で止めても残る)
+    loss_file = open(f"{args.out}/loss.csv", "w", encoding="utf-8")
+    loss_file.write("step,loss,elapsed_sec\n")
+
     t0 = time.time()
     running = 0.0
     for step in range(1, args.steps + 1):
@@ -109,7 +114,10 @@ def main():
         running += loss.item()
         if step % 100 == 0 or args.dry_run:
             n = 1 if args.dry_run else 100
-            print(f"step {step:6d}  loss {running / n:.4f}  {time.time() - t0:.0f}s")
+            elapsed = time.time() - t0
+            print(f"step {step:6d}  loss {running / n:.4f}  {elapsed:.0f}s")
+            loss_file.write(f"{step},{running / n:.6f},{elapsed:.1f}\n")
+            loss_file.flush()
             running = 0.0
 
         if step % args.sample_every == 0 or step == args.steps:
@@ -125,6 +133,8 @@ def main():
                 "args": vars(args),
             }, f"{args.out}/ckpt.pt")
             print(f"  -> saved samples / ckpt at step {step}")
+
+    loss_file.close()
 
 
 if __name__ == "__main__":
