@@ -1,7 +1,7 @@
 """
 学習済みチェックポイントから画像を生成し、勉強会で見せる図を作る。
 
-  python sample.py --ckpt runs/butterflies/ckpt.pt
+  uv run python sample.py --ckpt runs/butterflies/ckpt.pt
 
 出力 (チェックポイントと同じフォルダ):
   generated.png : 生成画像 (64枚)

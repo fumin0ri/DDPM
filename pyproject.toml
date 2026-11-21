@@ -1,0 +1,29 @@
+[project]
+name = "ddpm-minimal"
+version = "0.1.0"
+description = "DDPM (Ho et al. 2020) の最小実装 (勉強会用)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.7",
+    "numpy",
+    "matplotlib",
+    "pillow",
+    "datasets",
+]
+
+# パッケージとしてはビルドしない (スクリプトを直接実行するだけ)
+[tool.uv]
+package = false
+
+# PyPI の torch は Windows だと CPU 版になるので、CUDA 版の配布元を明示する。
+# cu128 は RTX 3090 (Ampere) / 4090 (Ada) どちらでも動く。
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]

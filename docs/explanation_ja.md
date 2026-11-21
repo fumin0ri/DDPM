@@ -214,7 +214,7 @@ def p_sample(self, model, x_t, t_index):
 | 学習率 warmup | 序盤の不安定さを避ける (論文: 5000 step) |
 | 勾配クリップ (1.0) | 論文と同じ |
 | **EMA** (指数移動平均) | 重みの移動平均で生成すると画質が大きく安定する。論文でも decay 0.9999。データが少なく step 数も少ないので、ここでは 0.9995 |
-| bfloat16 (autocast) | RTX 4090 で高速化 |
+| bfloat16 (autocast) | RTX 3090 / 4090 (Ampere 以降) で高速化 |
 
 ---
 
@@ -223,17 +223,17 @@ def p_sample(self, model, x_t, t_index):
 ### 実行手順
 
 ```bash
-pip install -r requirements.txt
+uv sync
 
-# (1) 2次元デモ: 4090 なら数分
-python toy_2d.py --shape swissroll
-python toy_2d.py --shape text --text DDPM
+# (1) 2次元デモ: GPU なら数分
+uv run python toy_2d.py --shape swissroll
+uv run python toy_2d.py --shape text --text DDPM
 
-# (2) 蝶の画像: 4090 で1時間前後 (40,000 step)
-python train_butterflies.py
+# (2) 蝶の画像: 40,000 step で 4090 なら1時間前後, 3090 なら1.5〜2時間程度
+uv run python train_butterflies.py
 
 # (3) 発表用の図
-python sample.py --ckpt runs/butterflies/ckpt.pt
+uv run python sample.py --ckpt runs/butterflies/ckpt.pt
 ```
 
 ### おすすめの話の順番

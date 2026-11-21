@@ -6,30 +6,37 @@ Ho et al., *Denoising Diffusion Probabilistic Models* (2020) を、論文の数�
 
 ## セットアップ
 
+環境は [uv](https://docs.astral.sh/uv/) で管理する。`pyproject.toml` と `uv.lock` があるので、次の1行で `.venv/` に同じ環境ができる (torch は CUDA 12.8 版。RTX 3090 / 4090 のどちらでも動く)。
+
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
+
+以降のコマンドは `uv run python ...` で実行する (または `.venv` を activate して `python ...`)。
+
+pip を使う場合は `pip install -r requirements.txt`。ただし Windows では PyPI の torch が CPU 版になるので、先に [PyTorch 公式](https://pytorch.org/get-started/locally/) の手順で CUDA 版を入れておく。
 
 ## 実行
 
 ```bash
 # 2次元の点群 (CPU でも数分, GPU なら1分程度)
-python toy_2d.py --shape swissroll     # swissroll / heart / text
-python toy_2d.py --shape text --text DDPM
+uv run python toy_2d.py --shape swissroll     # swissroll / heart / text
+uv run python toy_2d.py --shape text --text DDPM
 
-# 蝶の画像 64x64 (RTX 4090 で1時間前後)
-python train_butterflies.py
-python train_butterflies.py --dry-run          # 動作確認だけ
-python train_butterflies.py --data-dir ./imgs  # 自分の画像フォルダで学習
+# 蝶の画像 64x64 (RTX 4090 で1時間前後, RTX 3090 で1.5〜2時間程度)
+uv run python train_butterflies.py
+uv run python train_butterflies.py --dry-run          # 動作確認だけ
+uv run python train_butterflies.py --data-dir ./imgs  # 自分の画像フォルダで学習
+uv run python train_butterflies.py --steps 20000      # 時間を半分にしたいとき
 
 # 学習済みモデルから生成 + 発表用の図
-python sample.py --ckpt runs/butterflies/ckpt.pt
+uv run python sample.py --ckpt runs/butterflies/ckpt.pt
 ```
 
 SSH 先で長時間学習する場合は、接続が切れても止まらないように `tmux` や `nohup` で実行する:
 
 ```bash
-nohup python train_butterflies.py > train.log 2>&1 &
+nohup uv run python train_butterflies.py > train.log 2>&1 &
 ```
 
 ## ファイル

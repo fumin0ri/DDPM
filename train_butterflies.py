@@ -1,9 +1,10 @@
 """
-蝶の画像 (64x64) で DDPM を学習する。RTX 4090 1枚で 40,000 step が 1時間前後の想定。
+蝶の画像 (64x64) で DDPM を学習する。40,000 step で RTX 4090 なら1時間前後、
+RTX 3090 なら1.5〜2時間程度の想定 (VRAM はどちらも十分足りる)。
 
-  python train_butterflies.py                       # 蝶の画像で学習
-  python train_butterflies.py --data-dir ./my_imgs  # 自分のフォルダの画像で学習
-  python train_butterflies.py --dry-run             # 動作確認 (乱数画像・数 step)
+  uv run python train_butterflies.py                       # 蝶の画像で学習
+  uv run python train_butterflies.py --data-dir ./my_imgs  # 自分のフォルダの画像で学習
+  uv run python train_butterflies.py --dry-run             # 動作確認 (乱数画像・数 step)
 
 出力 (runs/butterflies/):
   samples_XXXXXX.png : 学習途中の生成結果 (EMA モデル)
@@ -81,7 +82,7 @@ def main():
     # 最初の warmup step は学習率を 0 から徐々に上げる (論文と同じ)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / args.warmup))
 
-    # RTX 4090 は bfloat16 が速い。CPU のときは使わない。
+    # Ampere 以降 (RTX 3090 / 4090 など) は bfloat16 が速い。CPU のときは使わない。
     use_amp = device == "cuda"
 
     t0 = time.time()

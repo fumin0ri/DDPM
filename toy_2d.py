@@ -1,9 +1,9 @@
 """
 2次元の点群で DDPM を体験するデモ (CPU でも1分程度)。
 
-  python toy_2d.py --shape swissroll
-  python toy_2d.py --shape heart
-  python toy_2d.py --shape text --text DDPM
+  uv run python toy_2d.py --shape swissroll
+  uv run python toy_2d.py --shape heart
+  uv run python toy_2d.py --shape text --text DDPM
 
 出力 (outputs/toy_<shape>/):
   forward.png  : 拡散過程。データにノイズが足され、ただのガウス分布になっていく様子
