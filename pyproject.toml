@@ -3,7 +3,7 @@ name = "ddpm-minimal"
 version = "0.1.0"
 description = "DDPM (Ho et al. 2020) の最小実装 (勉強会用)"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"  # torch の wheel がある範囲
 dependencies = [
     "torch>=2.7",
     "numpy",
