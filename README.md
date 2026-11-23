@@ -1,4 +1,4 @@
-# DDPM 最小実装 (勉強会用)
+# DDPM 最小実装
 
 Ho et al., *Denoising Diffusion Probabilistic Models* (2020) を、論文の数式・アルゴリズムと1対1で対応するように書いた PyTorch 実装。
 
@@ -29,7 +29,7 @@ uv run python train_butterflies.py --dry-run          # 動作確認だけ
 uv run python train_butterflies.py --data-dir ./imgs  # 自分の画像フォルダで学習
 uv run python train_butterflies.py --steps 20000      # 時間を半分にしたいとき
 
-# 学習済みモデルから生成 + 発表用の図
+# 学習済みモデルから生成と可視化
 uv run python sample.py --ckpt runs/butterflies/ckpt.pt
 
 # 学習曲線 (runs/butterflies/loss.csv → loss.png)

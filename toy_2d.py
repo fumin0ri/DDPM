@@ -1,15 +1,10 @@
 """
-2次元の点群で DDPM を体験するデモ (CPU でも1分程度)。
+2次元点群での DDPM デモ。
 
-  uv run python toy_2d.py --shape swissroll
-  uv run python toy_2d.py --shape heart
+  uv run python toy_2d.py --shape swissroll   # swissroll / heart / text
   uv run python toy_2d.py --shape text --text DDPM
 
-出力 (outputs/toy_<shape>/):
-  forward.png  : 拡散過程。データにノイズが足され、ただのガウス分布になっていく様子
-  reverse.png  : 逆過程。ノイズから少しずつ元の形が浮かび上がる様子
-  reverse.gif  : 上をアニメーションにしたもの (勉強会で見せる用)
-  loss.png     : 学習曲線
+出力 (outputs/toy_<shape>/): forward.png, reverse.png, reverse.gif, loss.png
 """
 
 import argparse
@@ -29,9 +24,6 @@ from ddpm import GaussianDiffusion
 from models import ToyMLP
 
 
-# ----------------------------------------------------------------------
-# データ: いろいろな形の点群 (平均0・標準偏差1 に正規化)
-# ----------------------------------------------------------------------
 def make_swissroll(n):
     u = 1.5 * math.pi * (1 + 2 * np.random.rand(n))
     x = np.stack([u * np.cos(u), u * np.sin(u)], axis=1)
@@ -46,7 +38,6 @@ def make_heart(n):
 
 
 def make_text(n, text):
-    # 文字を画像に描き、黒い画素の位置から点をサンプルする
     img = Image.new("L", (40 * len(text), 60), 255)
     draw = ImageDraw.Draw(img)
     try:
@@ -60,7 +51,7 @@ def make_text(n, text):
     ys, xs = np.nonzero(np.array(img) < 128)
     idx = np.random.randint(0, len(xs), n)
     pts = np.stack([xs[idx], -ys[idx]], axis=1).astype(np.float64)
-    return pts + np.random.rand(n, 2)  # 画素の中で少しばらつかせる
+    return pts + np.random.rand(n, 2)
 
 
 def make_data(shape, n, text):
@@ -73,13 +64,10 @@ def make_data(shape, n, text):
     else:
         raise ValueError(shape)
     x = x - x.mean(axis=0)
-    x = x / x.std()  # 平均0・標準偏差1 にそろえる (x_T ~ N(0, I) と同じくらいの広がり)
+    x = x / x.std()
     return torch.tensor(x, dtype=torch.float32)
 
 
-# ----------------------------------------------------------------------
-# 描画
-# ----------------------------------------------------------------------
 LIM = 3.0
 
 
@@ -109,7 +97,6 @@ def save_gif(trajectory, steps, path):
     ax.set_yticks([])
     title = ax.set_title("")
 
-    # 最後のフレームを少し長めに見せる
     frames = list(range(len(trajectory))) + [len(trajectory) - 1] * 15
 
     def update(i):
@@ -122,16 +109,13 @@ def save_gif(trajectory, steps, path):
     plt.close(fig)
 
 
-# ----------------------------------------------------------------------
-# メイン
-# ----------------------------------------------------------------------
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--shape", default="swissroll", choices=["swissroll", "heart", "text"])
     p.add_argument("--text", default="DDPM")
     p.add_argument("--n-data", type=int, default=20000)
     p.add_argument("--n-samples", type=int, default=3000)
-    p.add_argument("--steps", type=int, default=20000, help="学習の反復回数")
+    p.add_argument("--steps", type=int, default=20000)
     p.add_argument("--batch-size", type=int, default=512)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--T", type=int, default=1000)
@@ -149,10 +133,9 @@ def main():
     diffusion = GaussianDiffusion(T=args.T).to(device)
     model = ToyMLP().to(device)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    # 学習率を cosine カーブで 0 まで下げる。終盤に細かい形まで合わせ込むため
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.steps)
 
-    # ---- 1. 拡散過程を可視化 (学習は不要。q_sample だけで描ける) ----
+    # 拡散過程
     show_t = [0, args.T // 10, args.T // 4, args.T // 2, args.T - 1]
     x0 = data[: args.n_samples]
     snaps = []
@@ -162,7 +145,7 @@ def main():
     scatter_row(snaps, [f"t = {t}" for t in show_t], f"{out}/forward.png",
                 "Forward process q(x_t | x_0): data -> noise")
 
-    # ---- 2. 学習 (Algorithm 1) ----
+    # 学習
     losses = []
     for step in range(1, args.steps + 1):
         idx = torch.randint(0, data.shape[0], (args.batch_size,), device=device)
@@ -176,7 +159,6 @@ def main():
             print(f"step {step:6d}  loss {np.mean(losses[-1000:]):.4f}")
 
     fig, ax = plt.subplots(figsize=(5, 3))
-    # 生の loss はばらつきが大きいので移動平均を描く
     w = min(100, len(losses))
     ax.plot(np.convolve(losses, np.ones(w) / w, mode="valid"))
     ax.set_xlabel("step")
@@ -185,11 +167,10 @@ def main():
     fig.savefig(f"{out}/loss.png", dpi=120)
     plt.close(fig)
 
-    # ---- 3. 生成 (Algorithm 2) ----
+    # 生成
     model.eval()
-    every = max(1, args.T // 100)  # 100コマ程度記録する
+    every = max(1, args.T // 100)
     _, traj = diffusion.sample(model, (args.n_samples, 2), device, return_every=every)
-    # traj[0] は x_T (純粋なノイズ)、traj[k] は t_index = T - k*every 付近
     traj_steps = [args.T] + [t for t in reversed(range(args.T)) if t % every == 0]
 
     pick = [0, len(traj) // 2, int(len(traj) * 0.8), int(len(traj) * 0.95), len(traj) - 1]

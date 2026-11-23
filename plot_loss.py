@@ -1,15 +1,8 @@
 """
-train_butterflies.py の学習曲線を描く。
+train_butterflies.py の学習曲線を描く (loss.csv または学習ログ)。
 
-  uv run python plot_loss.py                                # runs/butterflies/loss.csv から
-  uv run python plot_loss.py train.log                      # nohup で残したログから
-  uv run python plot_loss.py train.log --logy --marks 5000  # 縦軸を対数に + samples_*.png の step に線
-
-入力は2種類どちらでもよい (拡張子で判別):
-  *.csv : train_butterflies.py が書き出す loss.csv (step,loss,elapsed_sec)
-  その他: 標準出力のログ。"step    100  loss 0.1234  12s" の行だけを拾う
-
-出力: 入力と同じフォルダの loss.png (--out で変更可)
+  uv run python plot_loss.py
+  uv run python plot_loss.py train.log --logy --marks 5000
 """
 
 import argparse
@@ -40,7 +33,7 @@ def read_log(path):
             if not m:
                 continue
             step = int(m.group(1))
-            # 同じログに複数回の学習が追記されていたら、最後の回だけを使う
+            # 複数回の学習が追記されていたら最後の回だけ使う
             if steps and step <= steps[-1]:
                 steps, losses = [], []
             steps.append(step)
@@ -62,7 +55,7 @@ def main():
     p.add_argument("--logy", action="store_true", help="縦軸を対数にする")
     p.add_argument("--smooth", type=int, default=10, help="移動平均の点数 (1点 = 100 step)")
     p.add_argument("--marks", type=int, default=0,
-                   help="この step ごとに縦線を引く (samples_*.png と対応させる用。例: 5000)")
+                   help="この step ごとに縦線を引く")
     args = p.parse_args()
 
     read = read_csv if args.path.endswith(".csv") else read_log

@@ -1,4 +1,4 @@
-"""画像の読み込み・保存の小道具 (DDPM の本質とは関係ない部分)。"""
+"""画像の読み込み・保存。"""
 
 import os
 
@@ -10,14 +10,13 @@ IMG_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
 
 
 def pil_to_tensor(img, size):
-    """PIL 画像 -> (3, size, size) の float テンソル。値域を [-1, 1] にする。"""
+    """PIL 画像 -> (3, size, size), 値域 [-1, 1]"""
     img = img.convert("RGB").resize((size, size), Image.BICUBIC)
-    x = torch.from_numpy(np.asarray(img, dtype=np.float32) / 255.0)  # [0, 1]
-    return x.permute(2, 0, 1) * 2.0 - 1.0  # (H, W, C) -> (C, H, W), [-1, 1]
+    x = torch.from_numpy(np.asarray(img, dtype=np.float32) / 255.0)
+    return x.permute(2, 0, 1) * 2.0 - 1.0
 
 
 def load_butterflies(size):
-    """Hugging Face Hub から Smithsonian の蝶の画像 (約1000枚) を読み込む。"""
     from datasets import load_dataset
 
     ds = load_dataset("huggan/smithsonian_butterflies_subset", split="train")
@@ -25,7 +24,6 @@ def load_butterflies(size):
 
 
 def load_folder(path, size):
-    """任意のフォルダ内の画像を全部読み込む (自分で集めた画像で試したいとき用)。"""
     files = []
     for root, _, names in os.walk(path):
         files += [os.path.join(root, n) for n in names if n.lower().endswith(IMG_EXTS)]
@@ -35,7 +33,6 @@ def load_folder(path, size):
 
 
 def to_pil_grid(x, nrow):
-    """(N, 3, H, W) の [-1, 1] テンソルをタイル状に並べた PIL 画像にする。"""
     x = ((x.clamp(-1, 1) + 1) / 2 * 255).round().byte().cpu()
     n, c, h, w = x.shape
     ncol = (n + nrow - 1) // nrow
